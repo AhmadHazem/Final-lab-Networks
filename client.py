@@ -1,15 +1,13 @@
 import socket
+from TCP import TCP_Segment
+HOST = "127.0.0.1" 
+PORT = 65432  
 
-msgFromClient       = "H"
-bytesToSend         = str.encode(msgFromClient)
-serverAddressPort   = ("127.0.0.1", 20001)
-bufferSize          = 1024
-
-# Create a UDP socket at client side
-UDPClientSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-
-# Send to server using created UDP socket
-UDPClientSocket.sendto(bytesToSend, serverAddressPort)
-msgFromServer = UDPClientSocket.recvfrom(bufferSize)
-msg = "Message from Server {}".format(msgFromServer[0])
-print(msg)
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.connect((HOST, PORT))
+    packet = TCP_Segment()
+    packet.set_data("Hello World")
+    string = packet.formulate_segment()
+    s.sendall(bytes(string, 'utf-8'))
+    data = s.recv(1024)
+    print(f"Received {data!r}")
