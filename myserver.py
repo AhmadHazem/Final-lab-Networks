@@ -9,14 +9,16 @@ Server = TCPEnd()
 Server.set_IP_port(localIP, localPort)
 Server.bind()
 while True:
+
+    
     segment , address = Server.receive_segment()
     if segment is not None:
         server_checksum = Server.checksum_calculate(segment['data'])
         if segment['packet_type'] == 'SYN':
-            if server_checksum != segment['checksum']:
+            if server_checksum == segment['checksum']:
                 print(segment)
                 packet = TCP_Segment()
-                packet.set_flags(syn=True, ack=False)
+                packet.set_flags(syn=True, ack=True)
                 packet.set_ack_number(segment['sequence_number'] + 1)
                 print(packet)
                 Server.send_segment(packet, address)
@@ -24,10 +26,10 @@ while True:
                 print(segment)
                 packet = TCP_Segment()
                 packet.set_ack_number(segment['sequence_number'])
-                packet.set_flags(syn=True, ack=True)
+                packet.set_flags(syn=True, ack=False)
                 Server.send_segment(packet, address)
         elif segment['packet_type'] == 'DATA':
-            if server_checksum != segment['checksum']:
+            if server_checksum == segment['checksum']:
                 print(segment)
                 packet = TCP_Segment()
                 packet.set_flags(ack=True)
@@ -37,12 +39,12 @@ while True:
             else:
                 print(segment)
                 packet = TCP_Segment()
-                packet.set_flags(ack=True)
+                packet.set_flags(ack=False)
                 packet.set_sequence_number(segment['ack_number'])
                 packet.set_ack_number(segment['sequence_number'] + 1)
                 Server.send_segment(packet, address)
         elif segment['packet_type'] == 'FIN':
-            if server_checksum != segment['checksum']:
+            if server_checksum == segment['checksum']:
                 print(segment)
                 packet = TCP_Segment()
                 packet.set_flags(fin=True, ack=True)
@@ -52,7 +54,7 @@ while True:
             else:
                 print(segment)
                 packet = TCP_Segment()
-                packet.set_flags(fin=True, ack=True)
+                packet.set_flags(fin=True, ack=False)
                 packet.set_sequence_number(segment['ack_number'])
                 packet.set_ack_number(segment['sequence_number'] + 1)
                 Server.send_segment(packet, address)

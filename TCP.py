@@ -116,7 +116,7 @@ class TCPEnd(object):
             segment = ast.literal_eval(segment)
             return segment, address
         except socket.timeout:
-            return "Timeout", None
+            return None, None
         
     def intiate_handshake(self, address):
         segment = TCP_Segment()
