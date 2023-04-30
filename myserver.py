@@ -3,7 +3,7 @@ from TCP import TCPEnd
 import sys
 
 localIP     = "127.0.0.1"
-localPort   = 20019
+localPort   = 20028
 
 file1 = open("log.txt","a")
 Server = TCPEnd()
@@ -32,6 +32,7 @@ while True:
                 packet = TCP_Segment()
                 packet.set_ack_number(segment['sequence_number'])
                 packet.set_flags(syn=True, ack=False)
+                packet.packet_type = 'NACK'
                 Server.send_segment(packet, address)
         elif segment['packet_type'] == 'DATA':
             if server_checksum == segment['checksum']:
@@ -70,12 +71,14 @@ while True:
                 packet.set_sequence_number(segment['ack_number'])
                 packet.set_ack_number(segment['sequence_number'] + 1)
                 Server.send_segment(packet, address)
+                Server.UDP_Socket.close()
                 break
             else:
                 print(segment)
                 file1.write(str(segment) + "\n")
                 packet = TCP_Segment()
                 packet.set_flags(fin=True, ack=False)
+                packet.packet_type = 'NACK'
                 packet.set_sequence_number(segment['ack_number'])
                 packet.set_ack_number(segment['sequence_number'] )
                 Server.send_segment(packet, address)

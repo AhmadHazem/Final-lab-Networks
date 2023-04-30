@@ -112,6 +112,13 @@ class TCPEnd(object):
         self.UDP_Socket.sendto(string_segment.encode("utf-8"), address)
 
 
+    def send_corrupted_segment(self, segment, address):
+        segment.source_port = self.localPort
+        segment.destination_port = address[1]
+        segment.checksum = self.checksum_calculate(segment.data) + 1
+        string_segment = self.prepare_segment(segment)
+        self.UDP_Socket.sendto(string_segment.encode("utf-8"), address)
+
     def receive_segment(self):
         try:
             segment, address = self.UDP_Socket.recvfrom(BUFFERSIZE)

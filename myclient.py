@@ -4,14 +4,14 @@ import sys
 
 localIP     = "127.0.0.1"
 localPort   = 54321
-serverAddressPort   = ("127.0.0.1", 20019)
+serverAddressPort   = ("127.0.0.1", 20028)
 target_host = "localhost"
 file1 = open("log.txt","a")
 
 def main():
     packet = TCP_Segment()
     #data = "GET http://localhost/greet.php/ HTTP/1.1\r\nHost:{}\r\n\r\n".format(target_host)
-    data = "POST http://localhost/greet.php/ HTTP/1.1\r\nHost:{}\r\n\r\nUser={}".format(target_host,"dalia")
+    data = "{} http://localhost/greet.php/ HTTP/1.1\r\nHost:{}\r\n\r\nUser={}".format(sys.argv[1],target_host,sys.argv[2])
     # print(sys.getsizeof(data))
     client = TCPEnd()
     client.set_IP_port(localIP, localPort)
@@ -51,10 +51,10 @@ def main():
  
     client.close_connection(serverAddressPort)
     report_status = data.split("\r\n\r")[0].split("\r\n")[0].split(" ")[1] + " " + data.split("\r\n\r")[0].split("\r\n")[0].split(" ")[2]
-    #print(data)
+    print(data)
     #print(report_status)
     client.UDP_Socket.close()
-    return "status for posting " + "dalia" + " is " + report_status + " ."
+    return "status for posting " + sys.argv[2] + " is " + report_status + " ."
 
 if __name__ == "__main__":
     finish = main()
