@@ -14,3 +14,5 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         request = request.decode('utf-8').split('\r\n')
         response = b'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\nHello World'
         conn.sendall(response)
+        for r in request:
+            print(r)

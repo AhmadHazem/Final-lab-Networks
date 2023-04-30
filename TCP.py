@@ -8,6 +8,7 @@ import math
 BUFFERSIZE = 1024
 LAST_CONNECTION = -1
 FIRST = 0
+file1 = open("log.txt","a")
 
 class TCP_Segment:
     def __init__(self):
@@ -18,7 +19,7 @@ class TCP_Segment:
         self.ack_number = 0
         #flags
         self.ack = False
-        self.rst = False
+        self.end = False
         self.syn = False
         self.fin = False
         #Window size 
@@ -35,10 +36,11 @@ class TCP_Segment:
     def generateSeqNumber(self):
         return random.randint(0, 4294967295)
 
-    def set_flags(self, ack=False, syn=False, fin=False):
+    def set_flags(self, ack=False, syn=False, fin=False, end=False):
         self.ack = ack
         self.syn = syn
         self.fin = fin
+        self.end = end
 
     def set_data(self, data):
         self.data = data
@@ -64,6 +66,7 @@ class TCPEnd(object):
     def __init__(self):
         self.status = 0
         self.UDP_Socket = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
+        self.realserverSocket = socket.socket(family=socket.AF_INET, type=socket.SOCK_STREAM)
         self.UDP_Socket.settimeout(0.5)
         self.current_seq_number = 0
         self.current_ack_number = 0
@@ -91,7 +94,7 @@ class TCPEnd(object):
             "source_port": segment.source_port,
             "destination_port": segment.destination_port,
             "ack": segment.ack,
-            "rst": segment.rst,
+            "end": segment.end,
             "syn": segment.syn,
             "fin": segment.fin,
             "packet_type": segment.packet_type(),
@@ -128,6 +131,7 @@ class TCPEnd(object):
                 if response["syn"] and response["ack"]:
                     response['destination_port'] = 54321
                     print(response)
+                    file1.write(str(response)+ "\n")
                     third_reply = TCP_Segment()
                     third_reply.set_flags(ack=True)
                     third_reply.set_ack_number(response["sequence_number"] + 1)
@@ -152,6 +156,7 @@ class TCPEnd(object):
                 if response["fin"] and response["ack"]:
                     response['destination_port'] = 54321
                     print(response)
+                    file1.write(str(response) + "\n")
                     third_reply = TCP_Segment()
                     third_reply.set_flags(ack=True)
                     third_reply.set_ack_number(response["sequence_number"] + 1)
@@ -171,16 +176,19 @@ class TCPEnd(object):
             segment.set_data(packet_data)
             segment.set_sequence_number(self.current_seq_number)
             segment.set_ack_number(self.current_ack_number)
+            if i == number_of_segments - 1:
+                segment.set_flags(end=True)
             self.send_segment(segment, address)
             self.current_seq_number = segment.seuqence_number + 1
         while True:
             segment, address = self.receive_segment()
             if segment is not None:
-                if segment["ack"] and self.current_seq_number <= segment["sequence_number"]:
+                if segment["ack"] and (self.current_seq_number >= segment["sequence_number"] or self.current_seq_number >= segment["ack_number"]):
                     segment['destination_port'] = 54321
                     print(segment)
-                    self.current_seq_number = segment["ack_number"] + 1
-                    self.current_ack_number = segment["sequence_number"] + 1
+                    file1.write(str(segment)+ "\n")
+                    self.current_seq_number = segment["ack_number"] + i
+                    self.current_ack_number = segment["sequence_number"] + i
                     break
                 elif not segment["ack"] or segment == "Timeout":
                     self.current_seq_number = self.current_seq_number - i
@@ -193,6 +201,13 @@ class TCPEnd(object):
                         self.send_segment(segment, address)
                         self.current_seq_number = segment.seuqence_number + 1
         return True
+    
+    def process_request(self, data):
+        self.realserverSocket.connect(("localhost", 80))
+        self.realserverSocket.send(data.encode("utf-8"))
+        response = self.realserverSocket.recv(BUFFERSIZE)
+        self.realserverSocket.close()
+        return response.decode("utf-8")
                 
     
 
